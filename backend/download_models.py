@@ -20,9 +20,9 @@ import sys
 # Get the ID from: File → Share → Copy link
 #   https://drive.google.com/file/d/  <FILE_ID>  /view?usp=sharing
 MODELS = {
-    "model_custom.h5":   "YOUR_CUSTOM_CNN_FILE_ID_HERE",
-    "model_resnet.h5":   "YOUR_RESNET50_FILE_ID_HERE",
-    "model_inception.h5": "YOUR_INCEPTIONV3_FILE_ID_HERE",
+    "model_custom.h5":   "1rZtGHhPjj1IS71XHXCc3ddbUfIQH2x6Z",
+    "model_resnet.h5":   "1xqg0CaizWtPf7WvZXvwsPmxCuW4CdOBD",
+    "model_inception.h5": "1fhA-pV5Kv0XegP9Nb1V3KUFaM2SybsZU",
 }
 # ─────────────────────────────────────────────────────────────────────────────
 
