@@ -48,15 +48,16 @@ CLASS_NAMES = [
     "Banana Yellow Sigatoka Disease",
 ]
 
-# Soft-voting weights: custom=0.2, resnet=0.4, inception=0.4
-WEIGHTS = {"custom": 0.2, "resnet": 0.4, "inception": 0.4}
+# Soft-voting weights: custom=1.0 (Using only custom to save memory on Render Free Tier)
+WEIGHTS = {"custom": 1.0}
 
 # Model file paths (relative to this file; adjust if needed)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATHS = {
     "custom":   os.path.join(BASE_DIR, "models", "model_custom.h5"),
-    "resnet":   os.path.join(BASE_DIR, "models", "model_resnet.h5"),
-    "inception": os.path.join(BASE_DIR, "models", "model_inception.h5"),
+    # Commented out to save memory on Render Free Tier
+    # "resnet":   os.path.join(BASE_DIR, "models", "model_resnet.h5"),
+    # "inception": os.path.join(BASE_DIR, "models", "model_inception.h5"),
 }
 
 # ---------------------------------------------------------------------------
