@@ -15,7 +15,7 @@ from contextlib import asynccontextmanager
 from typing import Optional
 
 import numpy as np
-from fastapi import FastAPI, File, Form, HTTPException, UploadFile, status
+from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from PIL import Image
@@ -295,13 +295,30 @@ async def health_check() -> HealthResponse:
     include_in_schema=False,
 )
 async def predict(
+    request: Request,
     file: Optional[UploadFile] = File(None, description="Banana leaf image file (max 10 MB)"),
     url: Optional[str] = Form(None, description="Direct URL to an image file"),
 ) -> PredictionResponse:
     image_bytes = None
     filename = "image"
 
-    # 1. Check if user passed a URL in the 'file' field as text
+    # 1. Fallback for JSON or URL-encoded requests where 'file' or 'url' is passed as a string
+    if file is None and url is None:
+        content_type = request.headers.get("content-type", "")
+        if "application/json" in content_type:
+            try:
+                body = await request.json()
+                url = body.get("file") or body.get("url")
+            except Exception:
+                pass
+        elif "application/x-www-form-urlencoded" in content_type:
+            try:
+                form_data = await request.form()
+                url = form_data.get("file") or form_data.get("url")
+            except Exception:
+                pass
+
+    # 2. Check if user passed a URL in the 'file' field as text in multipart/form-data
     # (very common mistake in Postman when type is left as 'Text')
     if isinstance(file, str) and file.startswith("http"):
         url = file
