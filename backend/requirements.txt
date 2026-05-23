@@ -2,8 +2,8 @@
 fastapi>=0.111.0
 uvicorn[standard]>=0.29.0
 
-# ML stack (TensorFlow includes Keras)
-tensorflow>=2.15.0
+# ML stack (TensorFlow CPU is smaller and better for Render free tier)
+tensorflow-cpu>=2.15.0
 numpy>=1.26.0
 
 # Image handling
