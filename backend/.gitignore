@@ -1,0 +1,24 @@
+__pycache__/
+*.py[cod]
+*.pyo
+
+# ── Model files ─────────────────────────────────────────────────────────────
+# Option A (files < 100 MB each): COMMENT OUT the lines below so .h5 files
+#   ARE committed to git → Render will have them without downloading.
+# Option B (files > 100 MB each): Keep them uncommented and use Google Drive.
+models/*.h5
+models/*.keras
+models/*.pkl
+
+# Environment
+.env
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
