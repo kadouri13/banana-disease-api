@@ -289,6 +289,11 @@ async def health_check() -> HealthResponse:
         503: {"model": ErrorResponse, "description": "No models loaded"},
     },
 )
+@app.post(
+    "/predict/",
+    response_model=PredictionResponse,
+    include_in_schema=False,
+)
 async def predict(
     file: UploadFile = File(
         ...,
