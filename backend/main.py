@@ -276,8 +276,8 @@ async def health_check() -> HealthResponse:
     response_model=PredictionResponse,
     summary="Predict Banana Leaf Disease",
     description=(
-        "Upload a banana leaf image (JPG, PNG, WEBP, BMP, GIF) and receive a "
-        "disease diagnosis from the ensemble model.\n\n"
+        "Upload a banana leaf image (JPG, PNG, WEBP, BMP, GIF) or provide an image URL, "
+        "and receive a disease diagnosis from the ensemble model.\n\n"
         "**Supported formats:** JPEG · PNG · WEBP · BMP · GIF\n"
         "**Max file size:** 10 MB\n"
         "**Image is automatically resized** to 224 × 224 px before inference."
@@ -295,24 +295,55 @@ async def health_check() -> HealthResponse:
     include_in_schema=False,
 )
 async def predict(
-    file: UploadFile = File(
-        ...,
-        description="Banana leaf image file (JPG, PNG, WEBP, BMP, GIF — max 10 MB)",
-    ),
+    file: Optional[UploadFile] = File(None, description="Banana leaf image file (max 10 MB)"),
+    url: Optional[str] = Form(None, description="Direct URL to an image file"),
 ) -> PredictionResponse:
-    # ── Validate content type ────────────────────────────────────────────────
-    allowed_types = {"image/jpeg", "image/png", "image/webp", "image/bmp", "image/gif"}
-    if file.content_type and file.content_type not in allowed_types:
+    image_bytes = None
+    filename = "image"
+
+    # 1. Check if user passed a URL in the 'file' field as text
+    # (very common mistake in Postman when type is left as 'Text')
+    if isinstance(file, str) and file.startswith("http"):
+        url = file
+        file = None
+
+    # 2. Download from URL if provided
+    if url:
+        import requests
+        try:
+            resp = requests.get(url, timeout=10)
+            resp.raise_for_status()
+            image_bytes = resp.content
+            filename = url.split("/")[-1]
+            content_type = resp.headers.get("Content-Type", "")
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"Failed to download image from URL: {str(e)}"
+            )
+
+    # 3. Otherwise read from uploaded file
+    elif file and hasattr(file, 'read'):
+        # ── Validate content type ────────────────────────────────────────────────
+        allowed_types = {"image/jpeg", "image/png", "image/webp", "image/bmp", "image/gif"}
+        if file.content_type and file.content_type not in allowed_types:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=(
+                    f"Unsupported file type '{file.content_type}'. "
+                    f"Allowed: {', '.join(allowed_types)}"
+                ),
+            )
+        image_bytes = await file.read()
+        filename = file.filename
+
+    else:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=(
-                f"Unsupported file type '{file.content_type}'. "
-                f"Allowed: {', '.join(allowed_types)}"
-            ),
+            detail="You must provide either an image 'file' or a valid image 'url'."
         )
 
-    # ── Read bytes & enforce size limit ──────────────────────────────────────
-    image_bytes = await file.read()
+    # ── Enforce size limit ──────────────────────────────────────
     max_bytes = MAX_FILE_SIZE_MB * 1024 * 1024
     if len(image_bytes) > max_bytes:
         raise HTTPException(
@@ -321,7 +352,7 @@ async def predict(
         )
 
     # ── Preprocess ───────────────────────────────────────────────────────────
-    logger.info("Processing image '%s' (%d bytes)", file.filename, len(image_bytes))
+    logger.info("Processing image '%s' (%d bytes)", filename, len(image_bytes))
     img_array = preprocess_image(image_bytes)
 
     # ── Inference ────────────────────────────────────────────────────────────
